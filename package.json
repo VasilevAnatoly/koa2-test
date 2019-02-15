@@ -1,0 +1,18 @@
+{
+    "name": "koa-test-task",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "dotenv": "^6.2.0",
+        "faker": "^4.1.0",
+        "koa": "^2.0.1",
+        "koa-bodyparser": "^4.2.0",
+        "koa-router": "^7.4.0",
+        "mysql": "^2.15.0",
+        "redis": "^2.8.0"
+    },
+    "devDependencies": {}
+}
