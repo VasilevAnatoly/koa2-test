@@ -4,6 +4,7 @@ const {
     promisify
 } = require('util');
 const getAsync = promisify(client.get).bind(client);
+const setAsync = promisify(client.set).bind(client);
 
 var db = require('../../connection');
 
@@ -16,13 +17,13 @@ module.exports.get = async (ctx, next) => {
             const order = ctx.request.query.order || 'ASC';
             const groupBy = ctx.request.query.groupBy || null;
 
-            const cached = await getAsync(`limit=${limit}&offset=${offset}` + (orderBy ? `&orderField=${orderBy}` : '') + (groupBy ? `&groupBy=${groupBy}` : '') + `&order=${order}`);
+            const cached = await getAsync(`limit=${limit}&offset=${offset}` + (orderBy ? `&orderBy=${orderBy}` : '') + (groupBy ? `&groupBy=${groupBy}` : '') + `&order=${order}`);
             if (cached) {
                 ctx.body = JSON.parse(cached);
                 resolve();
             }
 
-            let dbrequest = `SELECT * FROM books`;;
+            let dbrequest = `SELECT * FROM books as books`;;
 
             if (groupBy) {
                 dbrequest += ` GROUP BY ${groupBy}`;
@@ -34,21 +35,13 @@ module.exports.get = async (ctx, next) => {
 
             dbrequest += ` LIMIT ${limit} OFFSET ${offset};`;
 
-            db.query(dbrequest, (err, resp) => {
-                if (err) {
-                    throw err;
-                } else {
-                    client.set(`limit=${limit}&offset=${offset}` + (orderBy ? `&orderField=${orderBy}` : '') + (groupBy ? `&groupBy=${groupBy}` : '') + `&order=${order}`,
-                        JSON.stringify(resp), (err, res) => {
-                            if (err) {
-                                throw err;
-                            } else {
-                                ctx.body = resp;
-                                resolve();
-                            }
-                        });
-                }
-            });
+            const result = await db.query(dbrequest);
+
+            await setAsync(`limit=${limit}&offset=${offset}` + (orderBy ? `&orderBy=${orderBy}` : '') + (groupBy ? `&groupBy=${groupBy}` : '') + `&order=${order}`,
+                JSON.stringify(result));
+
+            ctx.body = result;
+            resolve();
         } catch (err) {
             ctx.status = 500;
             ctx.body = err.message;
@@ -69,17 +62,13 @@ module.exports.add = async (ctx, next) => {
                 image: ctx.request.body.image || ""
             };
 
-            db.query(`INSERT into books (title, date, author, description, image) 
-					VALUES ('${book.title}','${book.date}','${book.author}','${book.description}','${book.image}');`, (err, resp) => {
-                if (err) {
-                    throw err;
-                } else {
-                    ctx.body = {
-                        id: resp.insertId
-                    };
-                    resolve();
-                }
-            });
+            const result = await db.query(`INSERT into books (title, date, author, description, image) 
+            VALUES ('${book.title}','${book.date}','${book.author}','${book.description}','${book.image}');`);
+
+            ctx.body = {
+                id: result.insertId
+            };
+            resolve();
         } catch (err) {
             ctx.status = 500;
             ctx.body = err.message;
@@ -111,14 +100,9 @@ module.exports.update = async (ctx, next) => {
 
                 dbrequest = dbrequest.substring(0, dbrequest.length - 1) + ` WHERE id = ${bookId};`;
 
-                db.query(dbrequest, (err, resp) => {
-                    if (err) {
-                        throw err;
-                    } else {
-                        ctx.body = "ok";
-                        resolve();
-                    }
-                });
+                await db.query(dbrequest);
+                ctx.body = "ok";
+                resolve();
             } else {
                 throw new Error("No request body");
             }

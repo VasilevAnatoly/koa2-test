@@ -1,5 +1,4 @@
 var faker = require('faker');
-
 var db = require('../database/connection');
 
 module.exports.init = async () => {
@@ -16,49 +15,43 @@ module.exports.init = async () => {
             ");"
         );
 
-        db.query("SELECT COUNT(`id`) FROM `books`", (err, resp) => {
-            if (err) {
-                throw err;
-            } else {
-                if (resp[0]['COUNT(`id`)'] < 1e5) {
-                    let promises = [];
-                    for (let i = 0; i < 100; i++) {
-                        let values = [];
-                        for (let j = 0; j < 1000; j++) {
-                            values.push([
-                                faker.lorem.sentence(),
-                                faker.date.past(10).toISOString().substring(0, 10),
-                                `${faker.name.lastName()} ${faker.name.firstName()}`,
-                                faker.lorem.paragraph(),
-                                faker.image.image()
-                            ]);
-                        }
-                        promises.push(new Promise(function (resolve, reject) {
-                            db.query(
-                                "INSERT INTO `books`" +
-                                "(`title`, `date`, `author`, `description`, `image`)" +
-                                "VALUES ?", [values], (err, resp) => {
-                                    if (err) {
-                                        reject(err);
-                                    } else {
-                                        resolve();
-                                    }
-                                }
-                            );
-                        }));
-                    }
+        const result = await db.query("SELECT COUNT(`id`) as count FROM `books`");
 
-                    Promise.all(promises)
-                        .then((results) => {
-                            console.log("Data initialized ... ");
-                        })
-                        .catch((err) => {
-                            throw err;
-                        });
+        if (result[0].count < 1e5) {
+            let promises = [];
+            for (let i = 0; i < 100; i++) {
+                let values = [];
+                for (let j = 0; j < 1000; j++) {
+                    values.push([
+                        faker.lorem.sentence(),
+                        faker.date.past(10).toISOString().substring(0, 10),
+                        `${faker.name.lastName()} ${faker.name.firstName()}`,
+                        faker.lorem.paragraph(),
+                        faker.image.image()
+                    ]);
                 }
+                promises.push(new Promise(async (resolve, reject) => {
+                    try {
+                        await db.query(
+                            "INSERT INTO `books`" +
+                            "(`title`, `date`, `author`, `description`, `image`)" +
+                            "VALUES ?", [values]);
+                        resolve();
+                    } catch (err) {
+                        reject(err);
+                    }
+                }));
             }
-        });
+
+            Promise.all(promises)
+                .then((results) => {
+                    console.log("Data initialized ... ");
+                })
+                .catch((err) => {
+                    throw err;
+                });
+        }
     } catch (e) {
-        console.log("Err connection: " + e.message);
+        console.log("Error with initializing: " + e.message);
     }
 };

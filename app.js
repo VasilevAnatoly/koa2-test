@@ -1,4 +1,11 @@
+require('babel-register')({
+    presets: ['env']
+});
+require('babel-polyfill');
 require('dotenv').config();
+
+const initDB = require('./init/index');
+initDB.init();
 
 const koa = require('koa');
 const bodyParser = require('koa-bodyparser');

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "start": "node app.js"
+        "start": "nodemon app.js"
     },
     "dependencies": {
         "dotenv": "^6.2.0",
@@ -12,7 +12,16 @@
         "koa-bodyparser": "^4.2.0",
         "koa-router": "^7.4.0",
         "mysql": "^2.15.0",
+        "nodemon": "^1.18.10",
         "redis": "^2.8.0"
     },
-    "devDependencies": {}
+    "devDependencies": {
+        "babel-cli": "^6.26.0",
+        "babel-loader": "^8.0.5",
+        "babel-polyfill": "^6.26.0",
+        "babel-preset-env": "^1.7.0",
+        "babel-preset-es2015": "^6.24.1",
+        "babel-preset-stage-2": "^6.24.1",
+        "babel-register": "^6.26.0"
+    }
 }
