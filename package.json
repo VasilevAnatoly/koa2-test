@@ -6,6 +6,7 @@
         "start": "nodemon app.js"
     },
     "dependencies": {
+        "@koa/cors": "^2.2.3",
         "dotenv": "^6.2.0",
         "faker": "^4.1.0",
         "koa": "^2.0.1",
